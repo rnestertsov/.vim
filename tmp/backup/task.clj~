@@ -1,0 +1,52 @@
+(ns projman.models.task
+  (:require [noir.validation :as vali]
+            [clojure.java.jdbc :as sql]))
+
+(def mysql-db {:classname "com.mysql.jdbc.Driver"
+               :subprotocol "mysql"
+               :subname "//localhost:3306/projman"
+               :user "root"
+               :password ""})
+
+(def regx-hash #"#\w+")
+(def regx-user #"@")
+
+(defn tag-exist? [tag]
+  (sql/with-query-results res
+                          [(str "SELECT id FROM projman.tags WHERE name = ?") tag]
+                          (dorun (map #(println (:id %)) res))))
+
+(defn extract-tags [{:keys [task-body]}]
+  (into []
+        (for [tag (re-seq #"#\w+" task-body)]
+          (println (tag-exist? tag)))))
+          ;(:generated_key (sql/insert-record :tags {:name (.substring tag 1 (.length tag))})))))
+
+(defn valid? [{:keys [task-body]}]
+  (vali/rule (vali/has-value? task-body)
+             [:task-body "Task body is empty"])
+  (not (vali/errors? :task-body)))
+
+(defn get-task-list
+  "Get list of registered tasks"
+  []
+  (sql/with-connection mysql-db
+                       (sql/with-query-results res
+                                               ["SELECT * FROM projman.tasks"]
+                                               (into [] res))))
+
+; CRUD operations
+(defn add!
+  "Add new task. While adding do following:
+  1: extract tags & insert into database for this task
+  2: extract users & insert into database
+  3: save task itself"
+  [task]
+  (when (valid? task)
+    (sql/with-connection mysql-db
+                         (let [task-id (:generated_key (sql/insert-record :tasks
+                                                                          {:body (:task-body task)}))]
+                           (extract-tags task)))))
+                           ;(doseq [tag-id (extract-tags task)]
+                            ; (sql/insert-record :tags_tasks {:tag_id tag-id :task_id task-id}))))))
+

@@ -1,0 +1,5 @@
+#include "mydb.h"
+
+char *io_extact_column(char *filename, int idx) {
+    
+}

@@ -1,0 +1,9 @@
+(ns projman.models
+  (:use [clojure.java.jdbc]))
+
+(def db {:classname "com.mysql.jdbc.Driver"
+         :subprotocol "mysql"
+         :subname "//localhost:3306/projman"
+         :user "root"})
+
+

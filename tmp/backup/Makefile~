@@ -1,0 +1,52 @@
+CC = gcc
+LD = gcc
+
+# Paths
+OPATH = .generated
+BINDIR = bin
+
+# Binaries that should be build
+BINARIES = $(BINDIR)/mydb
+
+# Compile args
+CFLAGS = -c -W -Wall -O3
+LDFLAGS = -lpthread
+
+# Info messages
+LINK_MESSAGE = "\033[32;1m\n***Making binary \033[33m%s\033[32m...\n\033[m"
+COMPILE_MESSAGE = "\033[32;1m\n*Compiling \033[33m%s\033[32m...\n\033[m"
+
+SRCS = src/main.c \
+	   src/valpos.c
+OBJS = $(SRCS:.c=.o)
+
+# Do all tasks
+all: $(OPATH) $(BINDIR) $(BINARIES)
+	@printf "\033[34;1m\nApplication has been build successfully.\n\033[m"
+
+# Making directory for obj files
+$(OPATH):
+	@printf "\033[32;1m\nMaking \033[33m$(OPATH)/ \033[32mpath for object files...\n\033[m"
+	mkdir $(OPATH)
+
+# Making bin directory
+$(BINDIR):
+	@printf "\033[32;1m\nMaking \033[33m$(BINDIR)/ \033[32mpath for binaries...\n\033[m"
+	mkdir $(BINDIR)
+
+# Compiling source files
+.c.o:
+	@printf $(COMPILE_MESSAGE) "$<"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Linking binary app
+$(BINARIES): $(OBJS)
+	@printf $(LINK_MESSAGE) "mydb"
+	$(LD) $(LDFLAGS) $(OBJS) -o $@
+
+# Clean all build info
+.PHONY: clean
+clean:
+	@printf "\033[34;1m\nCleaning up...\n\033[m"
+	-rm -rf $(BINDIR)
+	-rm -rf $(OPATH)

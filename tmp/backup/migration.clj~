@@ -1,0 +1,16 @@
+(ns cookme.models.migration
+  (:require [clojure.java.jdbc :as sql]))
+
+(defn create-recipes []
+  (sql/with-connection main-db
+                       (sql/create-table :recipes
+                                         [:id :serial "PRIMARY KEY"]
+                                         [:title :varchar "NOT NULL"]
+                                         [:description :varchar "NOT NULL"]
+                                         [:created_at :timestamp "NOT NULL" "DEFAULT CURRENT_TIMESTAMP"])))
+
+(defn -main []
+  (print "Migartion database...")
+  (flush)
+  (create-recipes)
+  (print

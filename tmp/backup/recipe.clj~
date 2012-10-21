@@ -1,0 +1,66 @@
+(ns cookme.models.recipe
+  (:require [cookme.models.db :as db]
+            [clojure.java.jdbc :as sql]
+            [noir.validation :as vali]))
+
+(def recipes-per-page 10)
+
+(defn get-page [page]
+  (let [page-num (dec (Integer. page))
+        prev (* page-num recipes-per-page)]
+    (sql/with-connection db/main
+                         (sql/with-query-results rs
+                         ["SELECT * FROM cookme.recipes ORDER BY created_at LIMIT ? OFFSET ?" recipes-per-page prev]
+                         (into [] rs)))))
+
+(defn get-latest []
+  (get-page 1))
+
+(defn get-popular []
+  (get-page 1))
+
+(defn get-favourites [userid]
+  (sql/with-connection db/main
+                       (sql/with-query-results rs
+                                               ["SELECT
+                                                  *
+                                                FROM cookme.favourites AS fav INNER JOIN recipes ON recipes.id = fav.recipe_id WHERE fav.user_id = ?" userid]
+                                               (into [] rs))))
+
+(defn get-by-permalink [permalink]
+  (sql/with-connection db/main
+                       (sql/with-query-results rs
+                                               ["SELECT * FROM cookme.recipes WHERE perma_link = ? LIMIT 1" permalink]
+                                               (first rs))))
+
+(defn get-for-user [userid]
+  (sql/with-connection db/main
+                       (sql/with-query-results rs
+                                               ["SELECT * FROM cookme.recipes WHERE user_id = ?" userid]
+                                               (into [] rs))))
+
+; Validators
+(defn valid-recipe? [title description ingridients directions]
+  (vali/rule (vali/has-value? title)
+             [:title "Title should not be empty"])
+  (vali/rule (vali/has-value? description)
+             [:description "Description should not be empty"])
+  (vali/rule (vali/has-value? ingridients)
+             [:ingridients "Ingridients should not be empty"])
+  (vali/rule (vali/has-value? directions)
+             [:directions "Directions should not be empty"])
+ (not (vali/errors? :title :description :ingridients :directions)))
+
+(defn gen-permalink [name]
+  (.replaceAll (.replaceAll (.toLowerCase name) "\\s" "-") "[^a-z0-9_-]" ""))
+
+; CRUD actions
+(defn add! [{:keys [title description ingridients directions] :as recipe}]
+  (when (valid-recipe? title description ingridients directions)
+    (let [permalink (gen-permalink title)]
+      (sql/with-connection db/main
+                           (sql/insert-values
+                             :recipes
+                             [:title :description :ingridients :directions :perma_link :cook_time :kcals]
+                             [title description ingridients directions permalink 0 0])))))
+

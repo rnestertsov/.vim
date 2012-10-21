@@ -1,0 +1,12 @@
+from gameloft import get_version, db
+from gameloft.utils.decorators import profile
+
+print "We are using gameloft lib version: %s" % (get_version())
+
+conn = db.get('default')
+
+@profile
+def foo():
+	x = 100
+	for i in xrange(1000000):
+		x = x * 2 / 0.5

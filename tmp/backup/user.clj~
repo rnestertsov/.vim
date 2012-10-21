@@ -1,0 +1,58 @@
+(ns cookme.models.user
+  (:require [noir.session :as session]
+            [noir.util.crypt :as crypt]
+            [noir.validation :as vali]
+            [cookme.models.db :as db]
+            [clojure.java.jdbc :as sql]))
+
+(defn me []
+  (session/get :username))
+
+(defn logged? []
+  (not= (me) nil))
+
+(defn get-by-name [username]
+  (sql/with-connection db/main
+                       (sql/with-query-results rs
+                                               ["SELECT * FROM cookme.users WHERE username = ?" username]
+                                               (first rs))))
+
+; Validators
+(defn valid-user? [username]
+  (vali/rule (not (get-by-name username))
+             [:username "This username is already taken"])
+  (vali/rule (vali/min-length? username 3)
+             [:username "Username must be at least 3 characters"])
+  (not (vali/errors? :username)))
+
+(defn valid-password? [password password-repeat]
+  (vali/rule (vali/min-length? password 5)
+             [:password "Password must be at least 5 characters"])
+  (vali/rule (= password password-repeat)
+             [:password "Password-repeat is not equal to password"])
+  (not (vali/errors? :password)))
+
+; Actions
+(defn login! [{:keys [username password] :as user}]
+  (let [{stored-pass :password} (get-by-name username)]
+    (if (and stored-pass
+             (crypt/compare password stored-pass))
+      (do
+        (session/put! :username username))
+      (vali/set-error :username "Invalid username or password"))))
+
+(defn prepare-user [{password :password :as user}]
+  (assoc user :password (crypt/encrypt password)))
+
+(defn- store! [{:keys [username password]}]
+  (sql/with-connection db/main
+                       (sql/insert-values
+                         :users
+                         [:username :password]
+                         [username password])))
+
+(defn register! [{:keys [username password password-repeat] :as user}]
+  (when (valid-user? username)
+    (when (valid-password? password password-repeat)
+      (-> user (prepare-user) (store!)))))
+

@@ -1,0 +1,37 @@
+#ifndef BTREENODE_H
+#define BTREENODE_H
+
+#include "../common/Common.h"
+
+class BTreeNode {
+public:
+    BTreeNode();
+    BTreeNode(BTree *btree, int key, byte *data);
+    ~BTreeNode();
+
+    int getLargestKey();
+    bool isEmpty();
+    bool isFull();
+
+protected:
+    // parent B+Tree
+    BTree *_btree;
+    // record ID in the storage file
+    long _recId;
+    // children nodes
+    // long _children[];
+    // keys for children nodes
+    int *_keys;
+    // values associated with keys (only for leaf nodes)
+    byte **_values;
+    // index of first used item in the node
+    byte _first;
+    // flag which indicates if given node is leaf
+    bool _isLeaf;
+    // previous leaf node (only if this node is leaf)
+    long _previous;
+    // next leaf node (only if this node is leaf)
+    long _next;
+}
+
+#endif

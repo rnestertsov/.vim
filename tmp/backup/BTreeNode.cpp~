@@ -1,0 +1,51 @@
+#include "BTreeNode.h"
+#include "BTree.h"
+
+BTreeNode::BTreeNode() {
+    _recId = 0;
+    _btree = NULL;
+    _keys = NULL;
+    _values = NULL;
+    _isLeaf = false;
+    _previous = 0;
+    _next = 0;
+}
+
+BTreeNode::BTreeNode(BTree *btree, int key, byte *data) {
+    _btree = btree;
+    _isLeaf = true;
+
+    _keys = new int[BTREE_DEFAULT_SIZE];
+    _keys[BTREE_DEFAULT_SIZE - 2] = key;
+    _keys[BTREE_DEFAULT_SIZE - 1] = NULL;
+
+    //_recId = _btree._db.insert(this, this);
+}
+
+BTreeNode::~BTreeNode() {
+    if (_keys != NULL) {
+        delete [] _keys;
+        _keys = NULL;
+    }
+    if (values != NULL) {
+        delete [] _values;
+        _values = NULL;
+    }
+}
+
+int BTreeNode::getLargestKey() {
+    return _keys[BTEE_DEFAULT_SIZE - 1];
+}
+
+bool BTreeNode::isEmpty() {
+    if (_isLeaf) {
+        return (_first == sizeof(_values) - 1);
+    } else {
+        return (_first == sizeof(_children) -1);
+    }
+}
+
+bool BTree::isFull() {
+    return (_first == 0);
+}
+

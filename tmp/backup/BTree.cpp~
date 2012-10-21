@@ -1,0 +1,25 @@
+#include "BTree.h"
+#include <stdio.h>
+
+BTree::BTree() {
+}
+
+BTree::~BTree() {
+}
+
+void BTree::insert(int key, byte *data) {
+    if (data == NULL) {
+        fprintf(stderr, "Data is NULL");
+    }
+
+    if (rootNode == NULL) {
+        // we don't have root node yet
+        rootNode = new BTreeNode(this, key, data);
+        _height = 1;
+        _entries = 1;
+        // _db.update(_recid, this)
+    } else {
+        // insert into root node
+        rootNode.insert(_height, key, data);
+    }
+}

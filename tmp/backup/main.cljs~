@@ -1,0 +1,18 @@
+(ns cookme.client.main
+  (:require [crate.core :as crate]
+            [fetch.remotes :as remotes])
+  (:require-macros [fetch.macros :as fm])
+  (:use [jayq.core :only [$ append delegate data]])
+  (:use-macros [crate.macros :only [defpartial]]))
+
+(def $recipes ($ :#recipes))
+
+(defpartial recipe [{:keys [title description]}]
+            [:li.recipe
+             [:div.title title]
+             [:div.description description]])
+
+(fm/letrem [results (fetch-recipes)]
+            (doseq [entry results]
+              (append $recipes (recipe entry))
+              (.log js/console entry)))

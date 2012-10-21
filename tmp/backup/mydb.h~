@@ -1,0 +1,29 @@
+#ifndef MYDB_H
+#define MYDB_H
+
+#define DEBUG 1
+
+/* value types */
+#define TYPE_NO 0
+#define TYPE_INT 1
+#define TYPE_FLOAT 2
+#define TYPE_STRING 3
+#define TYPE_LONG 4
+#define TYPE_DOUBLE 5
+
+typedef unsigned char byte;
+
+typedef struct {
+    unsigned int type;
+    unsigned int pos;
+    byte *value;
+} val_pos_t;
+
+typedef struct {
+
+} block_t;
+
+extern val_pos_t *val_pos_create(unsigned int type, unsigned int pos, byte *value);
+extern void val_pos_destroy(val_pos_t *vp);
+
+#endif

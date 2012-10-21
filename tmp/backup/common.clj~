@@ -1,0 +1,36 @@
+(ns cookme.views.common
+  (:use [noir.core :only [defpartial]]
+        [hiccup.page :only [include-css include-js html5]]
+        [cookme.models.user :as user]))
+
+(defpartial nav-menu-anonym []
+            [:ul#nav-menu
+             [:li [:a {:href "/recipes/"} "recipes"]]
+             [:li [:a {:href "/popular/"} "popular"]]
+             [:li [:a {:href "/login"} "login"]]
+             [:li [:a {:href "/register"} "register"]]])
+
+(defpartial nav-menu-user []
+            [:ul#nav-menu
+             [:li [:a {:href "/recipes/"} "recipes"]]
+             [:li [:a {:href "/popular/"} "popular"]]
+             [:li [:a {:href "/favourities/"} "favourites"]]
+             [:li [:a {:href (str "/user/" (user/me))} "profile"]]
+             [:li [:a {:href "/recipes/my"} "my recipes"]]
+             [:li [:a {:href "/recipes/add"} "add recipe"]]
+             [:li [:a {:href "/logout"} "logout"]]])
+
+(defpartial layout [& content]
+            (html5
+              [:head
+               [:title "cookme"]
+               (include-css "/css/reset.css")
+               (include-css "/css/base.css")
+               (include-js "https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js")]
+              [:body
+               [:div#wrapper
+                (if (user/logged?)
+                  (nav-menu-user)
+                  (nav-menu-anonym))
+                content]
+               (include-js "/cljs/bootstrap.js")]))

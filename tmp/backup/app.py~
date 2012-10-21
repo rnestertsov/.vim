@@ -1,0 +1,25 @@
+"""
+Application entry point
+"""
+
+__author__ = 'roman'
+
+from flask import Flask, render_template, request, g, url_for, flash, jsonify
+import config
+from sqlalchemy import create_engine
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.config.from_envvar('RECIPES_APP_SETTINGS', silent=True)
+
+@app.before_request
+def connect_db():
+    g.db = create_engine(config.DB_URI)
+
+@app.route('/')
+def show_recipes():
+    entries = g.db.execute("select * from recipes")
+    return render_template("index.html", recipes=entries)
+
+if __name__ == '__main__':
+    app.run()

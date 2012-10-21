@@ -1,0 +1,148 @@
+(ns cookme.views.main
+  (:require [cookme.views.common :as common]
+            [noir.content.getting-started]
+            [noir.response :as resp]
+            [noir.session :as session]
+            [noir.validation :as vali]
+            [cookme.models.recipe :as recipes]
+            [cookme.models.user :as user]
+            [cookme.models.comment :as comments]
+            [clojure.string :as string])
+  (:use [noir.core :only [defpage defpartial render]]
+        [noir.fetch.remotes :only [defremote]]
+        [hiccup.core]
+        [hiccup.form]))
+
+; Partials
+(defpartial recipe-item [{:keys [id title description created_at perma_link] :as recipe}]
+            (when recipe
+              [:li.recipe
+               [:h2 [:a {:href (str "/recipe/" perma_link)} title]]
+               [:ul.datetime
+                [:li created_at]]
+                [:div.content description]]))
+
+(defpartial recipes-page [items]
+            (common/layout
+              (if (user/logged?)
+                [:div.content (str "Logged as " (user/me))])
+              [:ul.recipes
+               (map recipe-item items)]))
+
+(defpartial comment-item [{:keys [id username body created_at] :as comment}]
+            (when comment
+              [:li.comment
+               [:h3 [:a {:href (str "/user/" username)} username]]
+               [:ul.datetime
+                [:li created_at]]
+               [:div.content body]]))
+
+(defpartial error-text [errors]
+         [:span (string/join "" errors)])
+
+; Browse recipes
+(defpage "/" []
+         (resp/redirect "/recipes/"))
+
+(defpage "/recipes/" []
+         (recipes-page (recipes/get-latest)))
+
+(defpage "/recipes/page/:page" {:keys [page]}
+         (recipes-page (recipes/get-page page)))
+
+(defpage "/recipe/:permalink" {:keys [permalink]}
+         (let [recipe (recipes/get-by-permalink permalink)]
+           (let [comments (comments/get-by-recipe recipe)]
+             (common/layout
+                     [:h1 (:title recipe)]
+                     [:div.content (:description recipe)]
+                     [:ul "Ingridients:"
+                      [:li (:ingridients recipe)]]
+                     [:ul "Method:"
+                      [:li (:directions recipe)]]
+                     [:ul.actions
+                      [:li [:a {:href (str "/like/" (:id recipe))} (str "like (" (:popularity recipe) ")")]]
+                      [:li [:a {:href (str "/fav/" (:id recipe))} "add to favourities"]]]
+                     [:ul.comments
+                      (map comment-item comments)]))))
+
+(defpage "/recipes/my" []
+         (recipes-page (recipes/get-for-user (user/me-id))))
+
+(defpage "/popular/" []
+         (recipes-page (recipes/get-popular)))
+
+(defpage "/favourites/" []
+         (recipes-page (recipes/get-favourites (user/me-id))))
+
+; Register user
+(defpage "/register" {:as user}
+         (common/layout
+                 (form-to [:post "/register"]
+                       (label "username" "User name: ")
+                       (vali/on-error :username error-text)
+                       (text-field "username" (:username user))
+                       (label "password" "Password: ")
+                       (vali/on-error :password error-text)
+                       (password-field "password" (:password user))
+                       (label "password-repeat" "Repeat password: ")
+                       (password-field "password-repeat")
+                       (submit-button "Register"))))
+
+(defpage [:post "/register"] {:as user}
+         (if (user/register! user)
+             (resp/redirect "/recipes/")
+             (render "/register" user)))
+
+; Login
+(defpage "/login" {:as user}
+         (common/layout
+                 (form-to [:post "/login"]
+                       (label "username" "User name: ")
+                       (vali/on-error :username error-text)
+                       (text-field "username" (:username user))
+                       (vali/on-error :password error-text)
+                       (label "password" "Password: ")
+                       (password-field "password" (:password user))
+                       (submit-button "Login"))))
+
+(defpage [:post "/login"] {:as user}
+         (if (user/login! user)
+             (resp/redirect "/recipes/")
+             (render "/login" user)))
+
+(defpage "/logout" []
+         (session/clear!)
+         (resp/redirect "/recipes/"))
+
+(defpage "/user/:username" {:keys [username]}
+         (common/layout
+           [:h2 "User profile"]
+           [:p username]))
+
+; Add recipe
+(defpartial recipe-fields [{:keys [title description ingridients directions] :as recipe}]
+            (label "title" "Title: ")
+            (vali/on-error :title error-text)
+            (text-field "title" title)
+            (label "description" "Description: ")
+            (vali/on-error :description error-text)
+            (text-area "description" description)
+            (label "ingridients" "Ingridients: ")
+            (vali/on-error :ingridients error-text)
+            (text-area "ingridients" ingridients)
+            (label "directions" "Directions: ")
+            (vali/on-error :directions error-text)
+            (text-area "directions" directions))
+
+(defpage "/recipes/add" {:as recipe}
+         (common/layout
+                 (form-to [:post "/recipes/add"]
+                       (recipe-fields recipe)
+                       (submit-button "Add recipe"))))
+
+(defpage [:post "/recipes/add"] {:as recipe}
+          (if (recipes/add! recipe)
+              (resp/redirect "/recipes/")
+              (render "/recipes/add" recipe)))
+

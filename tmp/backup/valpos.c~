@@ -1,0 +1,47 @@
+#include "mydb.h"
+
+val_pos_t *val_pos_create(unsigned int type, unsigned int pos, byte *value) {
+    if (DEBUG) {
+        printf("initializing valpos...\n");
+    }
+    val_pos_t *vp = malloc(sizeof(val_pos_t));
+    vp->type = type;
+    vp->pos = pos;
+    switch (type) {
+        case TYPE_INT:
+            vp->pval = malloc(sizeof(int));
+            memcpy(vp->value, value, sizeof(int));
+            break;
+
+        case TYPE_FLOAT:
+            vp->pval = malloc(sizeof(float));
+            memcpy(vp->value, value, sizeof(float));
+            break;
+
+        case TYPE_STRING:
+            vp->pval = value;
+            break;
+
+        case TYPE_LONG:
+            vp->pval = malloc(sizeof(long long));
+            memcpy(vp->value, value, sizeof(long long));
+            break;
+
+        case TYPE_DOUBLE:
+            vp->pval = malloc(sizeof(double));
+            memcpy(vp->value, value, sizeof(double));
+            break;
+
+        default:
+            break;
+    }
+
+    return vp;
+}
+
+void val_pos_destroy(val_pos_t *vp) {
+    if (vp->pval && vp->type != TYPE_STRING) {
+        free(vp->pval);
+    }
+    free(vp);
+}

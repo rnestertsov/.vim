@@ -1,0 +1,41 @@
+(ns cookme.views.welcome
+  (:require [cookme.views.common :as common]
+            [noir.content.getting-started]
+            [noir.response :as resp]
+            [cookme.models.recipe :as recipes]
+            [cookme.models.user :as user])
+  (:use [noir.core :only [defpage defpartial]]
+        [noir.fetch.remotes :only [defremote]]
+        [hiccup.core]))
+
+; Partials
+(defpartial recipe-item [{:keys [id title description created_at] :as recipe}]
+            (when recipe
+              [:li.recipe
+               [:h2 [:a {:href (str "/recipe/" id)} title]]
+               [:ul.datetime
+                [:li created_at]]
+                [:div.content description]]))
+
+(defpartial recipes-page [items]
+            (common/layout
+              [:div.content (user/get-by-name "admin")]
+              [:ul.recipes
+               (map recipe-item items)]))
+
+; Pages
+(defpage "/" []
+         (resp/redirect "/recipes/"))
+
+(defpage "/recipes/" []
+         (recipes-page (recipes/get-latest)))
+
+(defpage "recipes/page/:page" {:keys [page]}
+         (recipes-page (recipes/get-page page)))
+
+(defremote fetch-recipes []
+           [{:title "Recipe 01"
+            :description "Description of the recipe"}
+            {:title "Recipe 02"
+             :description "Description for the second recipe"}])
+

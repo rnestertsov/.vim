@@ -1,0 +1,14 @@
+Storage:
+- column file organized in blocks 64KB each
+- First: the last value of each block is stored in the index: this allow quickly find block with given value. After block has been found binary search is applied to find
+  directly
+- Second: for all columns a sparce index is created on position (which is also touple id. Again, the last position of each block is stored in the index.
+  This is usefull for operations the needs to find a given value for a specific touple ID.
+
+Query execution:
+>> SELECT shipdate, linenum FROM lineitem
+>> WHERE shipdate < CONST1 AND linenum < CONST2
+
+We use operator DS1 (DataSource) which is responsible for reading columns from disk and performing filtering based on predicates. The
+output of the operator are a list of positions(touple ids) of values that passed given predicate.
+

@@ -1,0 +1,14 @@
+(ns cookme.models.comment
+  (:require [cookme.models.db :as db]
+            [clojure.java.jdbc :as sql]
+            [noir.validation :as vali]))
+
+(def comments-per-page 10)
+
+(defn get-by-recipe [{:keys [id] :as recipe}]
+  (sql/with-connection db/main
+                       (sql/with-query-results rs
+                                               ["SELECT comments.id AS id, users.username AS username, body, created_at FROM cookme.comments INNER JOIN users ON users.id = comments.user_id WHERE recipe_id = ? ORDER BY created_at DESC" id]
+                                               (into [] rs))))
+
+

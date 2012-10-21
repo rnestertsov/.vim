@@ -1,0 +1,25 @@
+#ifndef BTREE_H
+#define BTREE_H
+
+#include "../common/Common.h"
+
+class BTree {
+public:
+    BTree();
+    ~BTree();
+
+    void insert(int key, byte *data);
+protected:
+    // btree persistance
+    BTreeStorage *_treeStorage;
+    // record ID of this tree in the btree storage
+    long _recId;
+    // number of nodes we have to traverse to get leafs
+    int _height;
+    // root tree node
+    long _root;
+    // number of entries in BTree
+    int _entries;
+}
+
+#endif
